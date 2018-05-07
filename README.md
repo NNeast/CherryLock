@@ -7,42 +7,21 @@ CherryLock
 What is CherryLock?
 -------------------
 
-CherryLock is a project for Students' Council in Technikum Mechatroniczne nr 1. It's a system that unlocks the door when coorect tag is read by scanner locateed on the wall. Thanks to it, only certain persons can enter the SU (Samorząd Uczniowski/Students' Council) on their own.
+CherryLock is a project for Students' Council in Technikum Mechatroniczne nr 1. It's a system that unlocks the door when corect tag is read by scanner located on the wall. Thanks to it, only certain people can enter the SU (Samorząd Uczniowski/Students' Council) on their own. CherryLock also enables users to open the door remotely using standalone button, placed inside the room. Usage (successful tag opens and button presses) is logged on the SD card. I'm in process of developing a app ([CherryLock Manager](http://github.com/adamj57/CherryLockManager)) that allows administrators to check on logs, add and remove new people from database and a few more things.
 
 How it works?
 -------------
 
-Here is a ascii-flowchart explaining that:
+Here's flowchart explaining that:
 
-                                        +---------+
-    +----------------------------------->READ TAGS<-------------------------------------------+
-    |                              +---------V----------+                                     |
-    |                              |                    |                                     |
-    |                              |                    |                                     |
-    |                         +----v-----+        +-----v----+                                |
-    |                         |MASTER TAG|        |OTHER TAGS|                                |
-    |                         +--+-------+        ++-------------+                            |
-    |                            |                 |             |                            |
-    |                            |                 |             |                            |
-    |                      +-----v---+        +----v----+   +----v------+                     |
-    |         +------------+READ TAGS+---+    |KNOWN TAG|   |UNKNOWN TAG|                     |
-    |         |            +-+-------+   |    +-----------+ +------------------+              |
-    |         |              |           |                |                    |              |
-    |    +----v-----+   +----v----+   +--v--------+     +-v----------+  +------v----+         |
-    |    |MASTER TAG|   |KNOWN TAG|   |UNKNOWN TAG|     |GRANT ACCESS|  |DENY ACCESS|         |
-    |    +----+-----+   +---+-----+   +-----+-----+     +-----+------+  +-----+-----+         |
-    |         |             |               |                 |               |               |
-    |       +-v--+     +----v------+     +--v---+             |               +--------------->
-    +-------+EXIT|     |DELETE FROM|     |ADD TO|             |                               |
-            +----+     |  EEPROM   |     |EEPROM|             |                               |
-                       +-----------+     +------+             +-------------------------------+
+![Flowchart](https://raw.githubusercontent.com/adamj57/CherryLock/master/diagram.png)
 
 Yep, that's it. It's that easy to use! It uses only one tag for adding/removing alllowed tags to the system on the fly.
 
 EEPROM
 ------
 
-Access card ID's and other stuff is stored on internal EEPROM of the Arduino. Be careful when you adapt it for your own purpose - EEPROM has a limited write cycles, roughly about 100 000. It's better to add all allowed tags at once, before implementing CherryLock. Also, be careful when it comes to deletes - they also eat those write cycles, even **more efectively than the standard addition of the tag!** The way that deletion works is by shifting (it's more like copying right to left and then setting last 4 occupied adresses's values of memory mapping to 0, but let's call it shifting) all data placed after the chosen value by 4 bytes to the left. See, it can hurt those poor write cycles :(
+Access card ID's and other stuff is stored on internal EEPROM of the Arduino. Be careful when you adapt it for your own purpose - EEPROM has a limited write cycles, roughly about 100 000. It's better to add all allowed tags at once, before implementing CherryLock. Also, be careful when it comes to deleting stuff - that also eats those write cycles, even **more efectively than the standard addition of the tag!** The way that deletion works is by shifting all data placed after the chosen value by 4 bytes to the left (it's more like copying right to left and then setting last 4 occupied adresses's values of memory mapping to 0, but let's call it shifting). See, it can hurt those poor write cycles :(
 
 Memory mapping
 --------------
@@ -51,7 +30,7 @@ EEPROM on Arduino UNO has 1024 bytes of space. In this section I will explain wh
 Adress space of EEPROM is 0-1023 - each adress belonging to each byte. My notation is simple:
 
 * `[45]` referes to adress 45,
-* `[45:4]` referes to 32-bit word, starting from adress 45.
+* `[45:4]` referes to 32-bit (4-byte) word, starting from adress 45.
 
 So, now when notation is explained - here's the mapping:
 
@@ -81,45 +60,87 @@ Typical pin layout
 
 <table>
 	<tr>
-		<td><b>Signal</b></td>
-		<td><b>Arduino/ATMega328P Pin</b></td>
-		<td><b>MFRC522 Reader Pin</b></td>
-		<td><b>Relay</b></td>
+		<td>Arduino Pin</td>
+		<td>Signal</td>
 	</tr>
 	<tr>
-		<td>MFRC522 Reset</td>
-		<td>9</td>
-		<td>RST</td>
-		<td>-</td>
+		<td>0</td>
+		<td>Serial RX</td>
 	</tr>
 	<tr>
-		<td>SPI SS</td>
-		<td>10</td>
-		<td>SDA(SS)</td>
-		<td>-</td>
+		<td>1</td>
+		<td>Serial TX</td>
 	</tr>
 	<tr>
-		<td>SPI MOSI</td>
-		<td>11</td>
-		<td>MOSI</td>
-		<td>-</td>
+		<td>2</td>
+		<td>Wireless Open Button</td>
 	</tr>
 	<tr>
-		<td>SPI MISO</td>
-		<td>12</td>
-		<td>MISO</td>
-		<td>-</td>
+		<td>3</td>
+		<td>Wipe Button</td>
 	</tr>
 	<tr>
-		<td>SPI SCK</td>
-		<td>13</td>
-		<td>SCK</td>
-		<td>-</td>
-	</tr>
-	<tr>
-		<td>Relay switch</td>
 		<td>4</td>
-		<td>-</td>
-		<td>O</td>
+		<td>Relay Enable</td>
+	</tr>
+	<tr>
+		<td>5</td>
+		<td>Blue LED</td>
+	</tr>
+	<tr>
+		<td>6</td>
+		<td>Green LED</td>
+	</tr>
+	<tr>
+		<td>7</td>
+		<td>Red LED</td>
+	</tr>
+	<tr>
+		<td>8</td>
+		<td>MFRC522 MOSI</td>
+	</tr>
+	<tr>
+		<td>9</td>
+		<td>MFRC522 MISO</td>
+	</tr>
+	<tr>
+		<td>10</td>
+		<td>MFRC522 SCK</td>
+	</tr>
+	<tr>
+		<td>11</td>
+		<td>SD MOSI</td>
+	</tr>
+	<tr>
+		<td>12</td>
+		<td>SD MISO</td>
+	</tr>
+	<tr>
+		<td>13</td>
+		<td>SD SCK</td>
+	</tr>
+	<tr>
+		<td>A0</td>
+		<td>MFRC522 SS</td>
+	</tr>
+	<tr>
+		<td>A1</td>
+		<td>MFRC522 RST</td>
+	</tr>
+	<tr>
+		<td>A2</td>
+		<td>SD SS</td>
+	</tr>
+	<tr>
+		<td>A3</td>
+		<td>[Reserved for SD Full LED, to be done]</td>
+	</tr>
+	<tr>
+		<td>A4</td>
+		<td>SDA (Now used only for RTC)</td>
+	</tr>
+	<tr>
+		<td>A5</td>
+		<td>SCL (Now used only for RTC)</td>
 	</tr>
 </table>
